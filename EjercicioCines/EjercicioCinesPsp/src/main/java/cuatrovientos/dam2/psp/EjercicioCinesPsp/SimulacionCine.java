@@ -2,52 +2,49 @@ package cuatrovientos.dam2.psp.EjercicioCinesPsp;
 import java.util.*;
 
 public class SimulacionCine {
-	public static void main(String[] args) {
-       
-        int nAsientos = 200;
-        int nTaquillas = 2;
-        int nColas = 4;
-        int maxPorCola = 10;
-        int tiempoVentaMin = 20; 
-        int tiempoVentaMax = 30;
-        int tasaClientesMin = 10; 
-        int tasaClientesMax = 15;
-        int tiempoAperturaMinutos = 30;
+	public static void main(String[] args) throws InterruptedException {
+        
+        int asientos = 200;
+        int nTaquillas = 6;
+        int nColas = 8;
+        int capacidadCola = 10;
+        int tVentaMin = 20, tVentaMax = 30; 
 
-        Cine cine = new Cine(nAsientos);
+        Cine cine = new Cine(asientos);
         List<Cola> colas = new ArrayList<>();
-        for (int i = 0; i < nColas; i++) colas.add(new Cola(i, maxPorCola));
+        for (int i = 0; i < nColas; i++) colas.add(new Cola(i, capacidadCola));
 
-      
+        List<Taquilla> hilosTaquilla = new ArrayList<>();
         for (int i = 0; i < nTaquillas; i++) {
-            new Taquilla(i, cine, colas, tiempoVentaMin, tiempoVentaMax).start();
+            Taquilla t = new Taquilla(i, cine, colas, tVentaMin, tVentaMax);
+            hilosTaquilla.add(t);
+            t.start();
         }
 
-       
         Random rand = new Random();
         long inicio = System.currentTimeMillis();
-        
-        System.out.println("Abriendo taquillas...");
 
         
-        for (int minuto = 0; minuto < tiempoAperturaMinutos; minuto++) {
-            if (cine.getAsientosDisponibles() <= 0) break;
-
-            int clientesNuevos = rand.nextInt(tasaClientesMax - tasaClientesMin + 1) + tasaClientesMin;
-            for (int i = 0; i < clientesNuevos; i++) {
+        for (int m = 0; m < 30; m++) {
+            if (!cine.hayAsientos()) break;
+            
+            int clientesEsteMinuto = rand.nextInt(15 - 10 + 1) + 10;
+            for (int i = 0; i < clientesEsteMinuto; i++) {
                 boolean entro = false;
                
                 for (Cola c : colas) {
-                    if (c.entrar(i)) {
+                    if (c.clienteIntentaEntrar()) {
                         entro = true;
                         break;
                     }
                 }
-                if (!entro) cine.clienteSeFue();
+                if (!entro) cine.clienteRechazado();
             }
-            
-            try { Thread.sleep(100); } catch (InterruptedException e) {}
+            Thread.sleep(100); 
         }
+
+       
+        Thread.sleep(2000); 
 
         cine.mostrarResultados(System.currentTimeMillis() - inicio);
         System.exit(0);
